@@ -11,10 +11,12 @@ import android.widget.TextView;
 
 import net.lemonsoft.lemonbubble.LemonBubble;
 
+import gjjzx.com.udpsocketdemo.app.MyApplication;
 import gjjzx.com.udpsocketdemo.util.ToastUtil;
 
 
 public class MainActivity extends AppCompatActivity {
+
 
     private SocketConn sc;
 
@@ -42,8 +44,8 @@ public class MainActivity extends AppCompatActivity {
 
         sc.setListener(new SocketConn.onSocketListener() {
             @Override
-            public void onBuildSocketFail() {
-                UIhandler.sendEmptyMessageDelayed(FAIL_SOCKETBUILD, 1000);
+            public void onBuildSendSocketFail() {
+                UIhandler.sendEmptyMessageDelayed(FAIL_SENDSOCKETBUILD, 1000);
             }
 
             @Override
@@ -52,9 +54,35 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onReceiveDataFail() {
-                UIhandler.sendEmptyMessageDelayed(FAIL_RECEIVEDATA, 1000);
+            public void onReturnDataOutTime() {
+                UIhandler.sendEmptyMessageDelayed(FAIL_RETURNDATAOUTTIME, 1000);
             }
+
+
+
+            @Override
+            public void onReturnDataSuccess(String rd) {
+                Message msg = new Message();
+                msg.what = SUCCESS_RETURNDATA;
+                msg.obj = rd;
+                UIhandler.sendMessageDelayed(msg, 1000);
+            }
+
+
+//      ------------------------------------上面是发送数据-------------------------------------------------------
+//      ------------------------------------下面是接收服务器推送的消息-------------------------------------------
+
+            @Override
+            public void onBuildRecvSocketSuccess() {
+                UIhandler.sendEmptyMessageDelayed(SUCCESS_RECVSOCKETBUILD, 1000);
+            }
+
+
+            @Override
+            public void onBuildRecvSocketFail() {
+                UIhandler.sendEmptyMessageDelayed(FAIL_RECVSOCKETBUILD, 1000);
+            }
+
 
             @Override
             public void onReceiveDataSuccess(String rd) {
@@ -63,6 +91,12 @@ public class MainActivity extends AppCompatActivity {
                 msg.obj = rd;
                 UIhandler.sendMessageDelayed(msg, 1000);
             }
+
+            @Override
+            public void onReceiveDataFail() {
+                UIhandler.sendEmptyMessageDelayed(FAIL_RECEIVEDATA, 1000);
+            }
+
 
         });
 
@@ -85,16 +119,29 @@ public class MainActivity extends AppCompatActivity {
 
     //开启监听
     public void startListener(View view) {
-//        if (!MyApplication.isListening) {
-//            sc.ReceiveServerSocketData();
-//        }
+        if (!MyApplication.isListening) {
+            //等待中..
+            Message msg = new Message();
+            msg.obj = "监听开启中...";
+            msg.what = WAITING;
+            UIhandler.sendMessage(msg);
+            sc.ReceiveServerSocketData();
+        } else {
+            ToastUtil.show("已经开启");
+        }
     }
 
     private static final int WAITING = 10000;
-    private static final int FAIL_SOCKETBUILD = 10001;
+    private static final int FAIL_SENDSOCKETBUILD = 10001;
     private static final int FAIL_SENDDATA = 10002;
-    private static final int FAIL_RECEIVEDATA = 10003;
-    private static final int SUCCESS_RECEIVEDATA = 10004;
+    private static final int FAIL_RETURNDATAOUTTIME = 10003;
+    private static final int SUCCESS_RETURNDATA = 10004;
+
+
+    private static final int SUCCESS_RECVSOCKETBUILD = 10008;
+    private static final int FAIL_RECVSOCKETBUILD = 10005;
+    private static final int SUCCESS_RECEIVEDATA = 10006;
+    private static final int FAIL_RECEIVEDATA = 10007;
 
 
     private Handler UIhandler = new Handler(new Handler.Callback() {
@@ -105,20 +152,44 @@ public class MainActivity extends AppCompatActivity {
                     String title = (String) message.obj;
                     showWaiting(title);
                     break;
-                case FAIL_SOCKETBUILD:
-                    showFail("建立socket出错");
+                case FAIL_SENDSOCKETBUILD:
+                    showFail("建立发送socket出错");
                     break;
                 case FAIL_SENDDATA:
                     showFail("发送数据出错");
                     break;
-                case FAIL_RECEIVEDATA:
+                case FAIL_RETURNDATAOUTTIME:
                     showFail("服务器无响应");
                     break;
-                case SUCCESS_RECEIVEDATA:
+                case SUCCESS_RETURNDATA:
                     String data = (String) message.obj;
-                    tvdata.setText(data);
+                    tvdata.setText("服务器返回消息：" + data);
                     showSuccess(data.equals("bb") ? "成功断开连接" : "刷新完毕");
                     break;
+
+//      ------------------------------------上面是发送数据-------------------------------------------------------
+//      ------------------------------------下面是接收服务器推送的消息-------------------------------------------
+
+                case SUCCESS_RECVSOCKETBUILD:
+                    showSuccess("建立接收socket成功\n推送消息监听中...");
+                    break;
+
+                case FAIL_RECVSOCKETBUILD:
+                    showFail("建立接收socket出错");
+                    break;
+
+                case SUCCESS_RECEIVEDATA:
+                    String str = (String) message.obj;
+                    tvdata.setText("服务器推送消息：" + str);
+                    ToastUtil.show("收到服务器推送消息！");
+                    break;
+
+                case FAIL_RECEIVEDATA:
+                    ToastUtil.show("收到服务器推送消息出错");
+                    showFail("收到服务器推送消息出错");
+                    break;
+
+
                 default:
                     break;
             }

@@ -9,14 +9,17 @@ import android.content.Context;
 
 public class MyApplication extends Application {
 
-    private static Context context;
+    public static final boolean isLog = true;
 
-//    public static final String DSTIP = "192.168.1.1";
     public static final String DSTIP = "10.1.75.252";
     public static final int DSTPORT = 5000;
 
-//    public static boolean isListening = false;
+    public static final int LOCALPORT = 7777;
 
+    public static boolean isListening = false;
+
+
+    private static Context context;
     public static Context getContext() {
         return context;
     }

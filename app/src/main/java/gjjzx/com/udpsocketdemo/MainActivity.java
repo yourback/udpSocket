@@ -4,6 +4,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.EditText;
@@ -11,7 +13,13 @@ import android.widget.TextView;
 
 import net.lemonsoft.lemonbubble.LemonBubble;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import gjjzx.com.udpsocketdemo.app.MyApplication;
+import gjjzx.com.udpsocketdemo.bean.Msg;
+import gjjzx.com.udpsocketdemo.diy.MsgAdapter;
+import gjjzx.com.udpsocketdemo.util.LocalSQL;
 import gjjzx.com.udpsocketdemo.util.ToastUtil;
 
 
@@ -24,19 +32,46 @@ public class MainActivity extends AppCompatActivity {
 
     private TextView tvdata;
 
+    private RecyclerView msgRecyclerView;
+
+    private MsgAdapter adapter;
+
+    private List<Msg> msgList = new ArrayList<>();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        initMsg();
+
         findView();
 
         initSocket();
+
+        sc.ReceiveServerSocketData();
+    }
+
+    private void initMsg() {
+        Message msg = new Message();
+        msg.obj = "正在拉取消息列表\n请稍后...";
+        msg.what = WAITING;
+        UIhandler.sendMessage(msg);
+
+        msgList = LocalSQL.getLastMsgList();
+
+        refreshRecyclerview();
     }
 
     private void findView() {
         etdata = findViewById(R.id.et_data);
         tvdata = findViewById(R.id.tv_data);
+
+        msgRecyclerView = findViewById(R.id.msg_recyclerview);
+        LinearLayoutManager ll = new LinearLayoutManager(this);
+        msgRecyclerView.setLayoutManager(ll);
+        adapter = new MsgAdapter(msgList);
+        msgRecyclerView.setAdapter(adapter);
     }
 
     private void initSocket() {
@@ -57,7 +92,6 @@ public class MainActivity extends AppCompatActivity {
             public void onReturnDataOutTime() {
                 UIhandler.sendEmptyMessageDelayed(FAIL_RETURNDATAOUTTIME, 1000);
             }
-
 
 
             @Override
@@ -109,6 +143,12 @@ public class MainActivity extends AppCompatActivity {
             etdata.requestFocus();
             return;
         }
+
+        Msg smsg = new Msg(trim, Msg.TYPE_SEDT, System.currentTimeMillis());
+        msgList = LocalSQL.addMsg(smsg);
+
+        refreshRecyclerview();
+
         sc.postData(trim);
         //发送消息后，则等待中..
         Message msg = new Message();
@@ -163,7 +203,14 @@ public class MainActivity extends AppCompatActivity {
                     break;
                 case SUCCESS_RETURNDATA:
                     String data = (String) message.obj;
-                    tvdata.setText("服务器返回消息：" + data);
+
+                    Msg msg = new Msg(data, Msg.TYPE_RECEIVED, System.currentTimeMillis());
+
+                    msgList = LocalSQL.addMsg(msg);
+
+                    refreshRecyclerview();
+
+//                    tvdata.setText("服务器返回消息：" + data);
                     showSuccess(data.equals("bb") ? "成功断开连接" : "刷新完毕");
                     break;
 
@@ -180,7 +227,14 @@ public class MainActivity extends AppCompatActivity {
 
                 case SUCCESS_RECEIVEDATA:
                     String str = (String) message.obj;
-                    tvdata.setText("服务器推送消息：" + str);
+
+                    Msg rmsg = new Msg(str, Msg.TYPE_RECEIVED, System.currentTimeMillis());
+
+                    msgList = LocalSQL.addMsg(rmsg);
+
+                    refreshRecyclerview();
+
+//                    tvdata.setText("服务器推送消息：" + str);
                     ToastUtil.show("收到服务器推送消息！");
                     break;
 
@@ -188,14 +242,20 @@ public class MainActivity extends AppCompatActivity {
                     ToastUtil.show("收到服务器推送消息出错");
                     showFail("收到服务器推送消息出错");
                     break;
-
-
                 default:
                     break;
             }
             return false;
         }
     });
+
+    private void refreshRecyclerview() {
+        if (msgList.size() != 0){
+            adapter.notifyItemInserted(msgList.size() - 1);
+            msgRecyclerView.scrollToPosition(msgList.size() - 1);
+        }
+
+    }
 
     private void showFail(String s) {
         LemonBubble.showError(this, s, 1000);

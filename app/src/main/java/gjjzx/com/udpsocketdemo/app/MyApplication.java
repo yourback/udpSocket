@@ -3,6 +3,8 @@ package gjjzx.com.udpsocketdemo.app;
 import android.app.Application;
 import android.content.Context;
 
+import org.litepal.LitePal;
+
 /**
  * Created by PC on 2017/11/9.
  */
@@ -27,6 +29,7 @@ public class MyApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        LitePal.initialize(this);
         context = getApplicationContext();
     }
 }

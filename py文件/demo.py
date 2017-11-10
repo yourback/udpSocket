@@ -1,0 +1,2 @@
+print("nihao",end = '')
+print('!')

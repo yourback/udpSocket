@@ -4,30 +4,46 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center"
+    android:background="#d8e0e8"
     android:orientation="vertical"
     tools:context="gjjzx.com.udpsocketdemo.MainActivity">
+
+    <android.support.v7.widget.RecyclerView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:id="@+id/msg_recyclerview"
+        android:layout_weight="1" />
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:onClick="startListener"
-        android:text="开启接收数据监听" />
+        android:text="开启接收数据监听"
+        android:visibility="gone" />
 
-    <EditText
-        android:id="@+id/et_data"
+
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center"
-        android:hint="请输入要发送的数据"
-        android:singleLine="true" />
+        android:orientation="horizontal">
 
+        <EditText
+            android:id="@+id/et_data"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:hint="请输入要发送的数据"
+            android:maxLines="2"
+            android:singleLine="true" />
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:onClick="postdata"
-        android:text="send" />
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="postdata"
+            android:text="发送" />
+    </LinearLayout>
+
 
     <TextView
         android:id="@+id/tv_data"
@@ -37,6 +53,7 @@
         android:gravity="center"
         android:lines="2"
         android:textColor="#fff"
-        android:textSize="20sp" />
+        android:textSize="20sp"
+        android:visibility="gone" />
 
 </LinearLayout>

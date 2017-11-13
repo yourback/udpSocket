@@ -44,16 +44,4 @@
             android:text="发送" />
     </LinearLayout>
 
-
-    <TextView
-        android:id="@+id/tv_data"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="#8000"
-        android:gravity="center"
-        android:lines="2"
-        android:textColor="#fff"
-        android:textSize="20sp"
-        android:visibility="gone" />
-
 </LinearLayout>

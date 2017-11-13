@@ -52,6 +52,11 @@ public class MsgAdapter extends RecyclerView.Adapter<MsgAdapter.ViewHolder> {
         return mMsgList.size();
     }
 
+    public void refreshList(List<Msg> list) {
+        mMsgList = list;
+        notifyDataSetChanged();
+    }
+
     static public class ViewHolder extends RecyclerView.ViewHolder {
 
         LinearLayout leftLayout;

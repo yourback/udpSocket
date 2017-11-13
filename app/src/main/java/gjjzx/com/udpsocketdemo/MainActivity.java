@@ -3,34 +3,36 @@ package gjjzx.com.udpsocketdemo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.TextView;
+import android.widget.Toast;
 
 import net.lemonsoft.lemonbubble.LemonBubble;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
+import gjjzx.com.udpsocketdemo.app.ActivityCollector;
+import gjjzx.com.udpsocketdemo.app.BaseActivity;
 import gjjzx.com.udpsocketdemo.app.MyApplication;
 import gjjzx.com.udpsocketdemo.bean.Msg;
 import gjjzx.com.udpsocketdemo.diy.MsgAdapter;
 import gjjzx.com.udpsocketdemo.util.LocalSQL;
+import gjjzx.com.udpsocketdemo.util.LogUtil;
 import gjjzx.com.udpsocketdemo.util.ToastUtil;
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends BaseActivity {
 
 
     private SocketConn sc;
 
     private EditText etdata;
-
-    private TextView tvdata;
 
     private RecyclerView msgRecyclerView;
 
@@ -42,6 +44,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        LogUtil.e("oncreate");
 
         initMsg();
 
@@ -60,18 +64,19 @@ public class MainActivity extends AppCompatActivity {
 
         msgList = LocalSQL.getLastMsgList();
 
-        refreshRecyclerview();
+
     }
 
     private void findView() {
         etdata = findViewById(R.id.et_data);
-        tvdata = findViewById(R.id.tv_data);
 
         msgRecyclerView = findViewById(R.id.msg_recyclerview);
         LinearLayoutManager ll = new LinearLayoutManager(this);
         msgRecyclerView.setLayoutManager(ll);
         adapter = new MsgAdapter(msgList);
         msgRecyclerView.setAdapter(adapter);
+
+        refreshRecyclerview();
     }
 
     private void initSocket() {
@@ -210,7 +215,7 @@ public class MainActivity extends AppCompatActivity {
 
                     refreshRecyclerview();
 
-//                    tvdata.setText("服务器返回消息：" + data);
+                    etdata.setText("");
                     showSuccess(data.equals("bb") ? "成功断开连接" : "刷新完毕");
                     break;
 
@@ -234,6 +239,7 @@ public class MainActivity extends AppCompatActivity {
 
                     refreshRecyclerview();
 
+
 //                    tvdata.setText("服务器推送消息：" + str);
                     ToastUtil.show("收到服务器推送消息！");
                     break;
@@ -250,11 +256,12 @@ public class MainActivity extends AppCompatActivity {
     });
 
     private void refreshRecyclerview() {
-        if (msgList.size() != 0){
+
+        if (msgList.size() != 0) {
+            adapter.refreshList(msgList);
             adapter.notifyItemInserted(msgList.size() - 1);
             msgRecyclerView.scrollToPosition(msgList.size() - 1);
         }
-
     }
 
     private void showFail(String s) {
@@ -269,5 +276,34 @@ public class MainActivity extends AppCompatActivity {
         LemonBubble.showRoundProgress(this, s);
     }
 
+
+    //双击返回键退出
+    @Override
+    public void onBackPressed() {
+        exitBy2Click();
+    }
+
+    /**
+     * 双击退出函数
+     */
+    private static Boolean isExit = false;
+
+    private void exitBy2Click() {
+        Timer tExit = null;
+        if (!isExit) {
+            isExit = true; // 准备退出
+            Toast.makeText(this, "再按一次退出程序", Toast.LENGTH_SHORT).show();
+            tExit = new Timer();
+            tExit.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    isExit = false; // 取消退出
+                }
+            }, 2000); // 如果2秒钟内没有按下返回键，则启动定时器取消掉刚才执行的任务
+
+        } else {
+            ActivityCollector.finishAll();
+        }
+    }
 
 }
